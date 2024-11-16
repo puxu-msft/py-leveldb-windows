@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <MinimumPlatformVersion>10.0.22621.0</MinimumPlatformVersion>
+    <!-- Use of MFC: Use Standard Windows Libraries -->
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{A5A65E72-B484-4E61-9416-04D8B39C6083}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup Label="Dependencies">
+    <VcpkgRoot>C:\opt\vcpkg</VcpkgRoot>
+    <LevelDBPath>F:\my\db\leveldb</LevelDBPath>
+    <PythonPath>C:\opt\scoop\persist\pyenv\pyenv-win\versions\3.12.4</PythonPath>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <!-- <VCProjectVersion>17.0</VCProjectVersion> -->
+    <!-- <CharacterSet>MultiByte</CharacterSet> -->
+    <CharacterSet>Unicode</CharacterSet>
+    <IntDirRelPath>obj\$(Platform)_$(Configuration)</IntDirRelPath>
+    <IntDir>$(ProjectDir)$(IntDirRelPath)\</IntDir>
+    <OutDirRelPath>bin\$(Platform)_$(Configuration)</OutDirRelPath>
+    <OutDir>$(ProjectDir)$(OutDirRelPath)\</OutDir>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <!-- vcpkg honors UseDebugLibraries -->
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <Import Project="$(VcpkgRoot)\scripts\buildsystems\msbuild\vcpkg.props" Condition=" '$(VcpkgPropsImported)' != 'true' AND Exists('$(VcpkgRoot)\scripts\buildsystems\msbuild\vcpkg.props') " />
+  <PropertyGroup>
+    <!-- Why TargetExt not work if placed above? -->
+    <TargetExt>.pyd</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(TargetName)_d</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <!-- <VcpkgEnabled Condition="EXISTS('$(VcpkgRoot)\vcpkg.exe')">true</VcpkgEnabled> -->
+    <VcpkgTriplet>x64-windows</VcpkgTriplet>
+    <!-- True to use isolated folder vcpkg_installed. see https://learn.microsoft.com/en-us/vcpkg/consume/manifest-mode -->
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
+    <!-- True to restore packages during build. see https://learn.microsoft.com/zh-cn/vcpkg/users/buildsystems/msbuild-integration -->
+    <VcpkgManifestInstall>true</VcpkgManifestInstall>
+    <!-- False to honor vcpkg.json only -->
+    <VcpkgAutoLink>false</VcpkgAutoLink>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <ConformanceMode>true</ConformanceMode>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+      <!-- <DisableLanguageExtensions>true</DisableLanguageExtensions> -->
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <PreprocessorDefinitions>
+        LEVELDB_EXT_EXPORTS;
+        LEVELDB_PLATFORM_WINDOWS;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+        $(PythonPath)\include;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <!-- the latter the higher priority, must be after vcpkg -->
+      <AdditionalIncludeDirectories Condition="EXISTS('$(LevelDBPath)')">
+        $(LevelDBPath)\include;
+        %(AdditionalIncludeDirectories)
+      </AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /utf-8 /bigobj</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+        leveldb.lib;
+        %(AdditionalDependencies)
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+        $(PythonPath)\libs;
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <!-- the latter the higher priority, must be after vcpkg -->
+      <AdditionalLibraryDirectories Condition="EXISTS('$(LevelDBPath)')">
+        $(LevelDBPath)\build\$(Configuration);
+        %(AdditionalLibraryDirectories)
+      </AdditionalLibraryDirectories>
+      <ModuleDefinitionFile>leveldb_1.23.def</ModuleDefinitionFile>
+      <Subsystem>Console</Subsystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>
+        _DEBUG;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+        python3_d.lib;
+        <!-- python312_d.lib; -->
+        %(Link.AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>
+        NDEBUG;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>
+        python3.lib;
+        <!-- python312.lib; -->
+        %(Link.AdditionalDependencies)
+      </AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\leveldb_ext.cc" />
+    <ClCompile Include="..\leveldb_object.cc" />
+  </ItemGroup>
+  <Import Project="$(VcpkgRoot)\scripts\buildsystems\msbuild\vcpkg.targets" Condition="Exists('$(VcpkgRoot)\scripts\buildsystems\msbuild\vcpkg.targets') " />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

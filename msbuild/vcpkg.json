@@ -1,0 +1,14 @@
+{
+  "dependencies": [
+    "leveldb[crc32c, snappy]",
+    "zlib"
+  ],
+  "overrides": [
+    {
+      "name": "leveldb",
+      "version": "1.23",
+      "properties": {
+      }
+    }
+  ]
+}
