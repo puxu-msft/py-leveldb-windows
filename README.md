@@ -1,4 +1,4 @@
-# py-leveldb-win
+# py-leveldb-windows
 
 The [upstream project][happynear] targets Python 2 and Python 3.6. This fork changes as follows:
 
@@ -20,7 +20,7 @@ Prepare
 
 1. VS 2022 IDE or Build Tools installed with MSVC v143 version.
 2. Python 3 binaries, no matter installed or extracted from zip.
-3. LevelDB and Snappy binaries, no matter built by yourself or from vcpkg.
+3. LevelDB and Snappy binaries, no matter built manually or from vcpkg.
 4. `Install-Module -Scope CurrentUser VSSetup`
 
 Edit `./msbuild/leveldb_ext.vcxproj`, check such as `VcpkgRoot` `LevelDBPath` `PythonPath`.
@@ -43,3 +43,7 @@ Here a test script to verify the installation.
 ```ps1
 & python ./tests/test_leveldb.py
 ```
+
+## Advanced: Build LevelDB manually
+
+See [./leveldb/README.md](./leveldb/README.md) for more details.

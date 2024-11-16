@@ -1,0 +1,40 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "windows-x64",
+      "hidden": true,
+      // It's a multi-target generator, it honors CMAKE_CONFIGURATION_TYPES rather than CMAKE_BUILD_TYPE
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_GENERATOR_PLATFORM": "x64",
+        "BUILD_SHARED_LIBS": "OFF",
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      },
+      "environment": {
+        "VCPKG_DEFAULT_TRIPLET": "x64-windows",
+        "VCPKG_CRT_LINKAGE": "dynamic",
+        "VCPKG_LIBRARY_LINKAGE": "dynamic"
+      }
+    },
+    {
+      "name": "lib",
+      "displayName": "Windows x64 LIB",
+      "inherits": "windows-x64",
+      "cacheVariables": {
+      },
+      "environment": {
+      }
+    },
+    {
+      "name": "dll",
+      "displayName": "Windows x64 DLL",
+      "inherits": "windows-x64",
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS": "ON"
+      },
+      "environment": {
+      }
+    }
+  ]
+}

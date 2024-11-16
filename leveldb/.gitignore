@@ -1,0 +1,6 @@
+
+/build/
+CMakeUserPresets.json
+
+/src
+*.exp
