@@ -21,7 +21,7 @@ Prepare
 1. VS 2022 IDE or Build Tools installed with MSVC v143 version.
 2. Python 3 binaries, no matter installed or extracted from zip.
 3. LevelDB and Snappy binaries, no matter built manually or from vcpkg.
-4. `Install-Module -Scope CurrentUser VSSetup`
+4. PowerShell module `Install-Module -Scope CurrentUser VSSetup`
 
 Edit `./msbuild/leveldb_ext.vcxproj`, check such as `VcpkgRoot` `LevelDBPath` `PythonPath`.
 

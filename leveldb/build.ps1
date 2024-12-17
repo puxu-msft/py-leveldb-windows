@@ -5,7 +5,7 @@ param(
 
     # for cmake --build
     [switch]$BuildOnly,
-    [switch]$Retail
+    [switch]$ReleaseBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,7 +38,7 @@ function cmake_gen {
 }
 
 function cmake_build {
-    $config = if ($Retail) { "Release" } else { "Debug" }
+    $config = if ($ReleaseBuild) { "Release" } else { "Debug" }
 
     $exeArgs = @(
         "--build"

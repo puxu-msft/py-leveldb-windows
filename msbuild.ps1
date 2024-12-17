@@ -3,7 +3,7 @@
 Run MSBuild out of a Developer PowerShell
 
 .NOTES
-241117
+241201
 
 .NOTES
 Install-Module -Scope CurrentUser VSSetup
@@ -12,90 +12,110 @@ Install-Module -Scope CurrentUser VSSetup
 For .NET projects, see a modern way (but there're some different) from https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-msbuild
 
 #>
+[CmdletBinding()]
 param (
-    [Parameter(Position=0)]
+    [Parameter(Mandatory, Position=0)]
     [string]$Project,
 
     [string]$Target,
-    [switch]$ReleaseBuild,
 
+    [switch]$ReBuild,
     [switch]$Clean,
+
+    [switch]$ReleaseBuild,
+    [switch]$Retail,
+
+    [switch]$AnyCPU,
+
     [switch]$V,
-    [switch]$VV
+    [switch]$VV,
+
+    [Parameter(ValueFromRemainingArguments)]
+    $Remaining
 )
 
 $ErrorActionPreference = 'Stop'
 trap { throw $_ }
 
-if ('' -eq [string]$Project) {
-    $Project = "."
-}
 $Project = Resolve-Path -LiteralPath $Project
 if (Test-Path -PathType Container $Project) {
     $ProjectDir = $Project
-    $Project = "."
+    $ProjectName = "."
 }
 else {
     $ProjectDir = [IO.Path]::GetDirectoryName($Project)
-    $Project = [IO.Path]::GetFileName($Project)
+    $ProjectName = [IO.Path]::GetFileName($Project)
 }
 
-if ('' -eq [string]$Target) {
-    $Target = "Build"
-}
-$Targets = $Target.Split(',')
-if ($Clean) {
-    $Targets = @("Clean") + $Targets
-}
+function main {
+    # not work by now
+    # see https://github.com/dotnet/msbuild/issues/1596
+    $env:DOTNET_CLI_UI_LANGUAGE = "en-US"
+    $env:PreferredUILang = "en-US"
+    $env:VSLANG = "1033"
+    # chcp 65001
 
-$BuildProfile = @{
-    Target = [string]::Join(',', $Targets);
-    Configuration = ($ReleaseBuild ? "Release": "Debug");
-    # Platform = "AnyCPU";
-    Platform = "x64";
-    MaxCpuCount = 4;
-}
+    $vsInstance = Get-VSSetupInstance -All | ? { $_.State -eq [Microsoft.VisualStudio.Setup.Configuration.InstanceState]::Complete } | Select-Object -First 1
+    if ($null -eq $vsInstance) {
+        throw "Failed to Get-VSSetupInstance"
+    }
 
-# -Prerelease if needed
-$vsInstance = Get-VSSetupInstance | Select-Object -First 1
-if ($null -eq $vsInstance) {
-    Write-Error 'Failed to Get-VSSetupInstance'
-    exit(1)
-}
+    if ('' -eq [string]$Target) {
+        $Target = "Build"
+    }
+    $Targets = $Target.Split(',')
+    if ($ReBuild) {
+        $Targets = @("Clean") + $Targets
+    }
+    elseif ($Clean) {
+        $Targets = @("Clean")
+    }
 
-# not work by now
-# see: https://github.com/dotnet/msbuild/issues/1596
-$env:DOTNET_CLI_UI_LANGUAGE = "en-US"
-$env:PreferredUILang = "en-US"
-$env:VSLANG = "1033"
-# chcp 65001
+    if ($Retail) {
+        $ReleaseBuild = $true
+    }
 
-Push-Location $ProjectDir
-try {
+    $Targets = [string]::Join(',', $Targets)
+    $Configuration = if ($ReleaseBuild) {"Release"} else {"Debug"}
+    $Platform = if ($AnyCPU) {"Any CPU"} else {"x64"}
+
     $exeArgs = @(
-        $Project,
-        "/NoLogo",
-        "/t:$($BuildProfile.Target)",
-        "/p:Configuration=$($BuildProfile.Configuration)",
-        "/p:Platform=$($BuildProfile.Platform)",
-        "/MaxCpuCount:$($BuildProfile.MaxCpuCount)"
+        $ProjectName,
+        "-t:$Targets",
+        "-p:Configuration=$Configuration",
+        "-p:Platform=$Platform",
+        "-NoLogo"
     )
 
     if ($VV) {
-        $exeArgs += "/verbosity:diag"
+        $exeArgs += @("-verbosity:diag")
     }
     elseif ($V) {
-        $exeArgs += "/verbosity:detailed"
+        $exeArgs += @("-verbosity:detailed")
+    }
+    else {
+        $exeArgs += @("-MaxCpuCount:4")
     }
 
     if ($env:PROCESSOR_ARCHITECTURE -ieq 'AMD64') {
         # Hostx64
-        & "$($vsInstance.InstallationPath)\MSBuild\Current\Bin\amd64\MSBuild.exe" @exeArgs @args
+        & "$($vsInstance.InstallationPath)\MSBuild\Current\Bin\amd64\MSBuild.exe" @exeArgs
+    }
+    elseif ($env:PROCESSOR_ARCHITECTURE -ieq 'x86') {
+        # Hostx86
+        & "$($vsInstance.InstallationPath)\MSBuild\Current\Bin\MSBuild.exe" @exeArgs
     }
     else {
-        # Hostx86
-        & "$($vsInstance.InstallationPath)\MSBuild\Current\Bin\MSBuild.exe" @exeArgs @args
+        throw "Unsupported CPU arch: $($env:PROCESSOR_ARCHITECTURE)"
     }
+    if (0 -ne $LASTEXITCODE) {
+        throw "msbuild exited with code $LASTEXITCODE"
+    }
+}
+
+Push-Location $ProjectDir
+try {
+    main
 }
 finally {
     Pop-Location
